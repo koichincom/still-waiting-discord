@@ -4,7 +4,7 @@ A Discord bot that automatically monitors mentions and replies, then sends **dua
 
 ## 🚀 Quick Start
 
-1. **[Invite Still Waiting to your server](INVITE_LINK_HERE)** *(Link will be added when deployed)*
+1. **[Invite Still Waiting to your server](https://discord.com/oauth2/authorize?client_id)** *(Link will be added when deployed)*
 2. Grant the required permissions during invitation
 3. Start mentioning users or replying to messages
 4. The bot automatically monitors and reminds users with both channel mentions and DMs!
