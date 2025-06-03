@@ -13,7 +13,5 @@ services:
         value: "true"
       - key: ENABLE_NOTIFY
         value: "true"
-      - key: ENABLE_DM_REMINDERS
-        value: "true"
       - key: MAX_CONCURRENT_MONITORING
         value: "1000"

@@ -1,20 +1,20 @@
 # Still Waiting - Discord Reminder Bot
 
-A Discord bot that automatically monitors mentions and replies, then sends **dual reminders** (channel + DM) if users don't respond within a specified time. Features smart monitoring, memory management, and comprehensive user tracking.
+A Discord bot that automatically monitors mentions and replies, then sends channel reminders if users don't respond within a specified time. Features smart monitoring, memory management, and comprehensive user tracking.
 
 ## 🚀 Quick Start
 
 1. **[Invite Still Waiting to your server](https://discord.com/oauth2/authorize?client_id=1379235275745656994&permissions=292057852928&integration_type=0&scope=bot)** *(Link will be added when deployed)*
 2. Grant the required permissions during invitation
 3. Start mentioning users or replying to messages
-4. The bot automatically monitors and reminds users with both channel mentions and DMs!
+4. The bot automatically monitors and reminds users with channel mentions!
 
 ## ✨ Features
 
 ### Core Functionality
 
 - **Automatic Monitoring**: Works without commands - simply mention users or reply to messages
-- **Dual Reminder System**: Sends both channel mentions AND direct messages (configurable)
+- **Channel Reminders**: Sends reminder messages in the channel where mentions occur
 - **User Mentions**: Monitors individual user mentions (`@username`)
 - **Role Mentions**: Monitors all members when a role is mentioned (`@role`)
 - **Reply Monitoring**: Monitors users when you reply to their messages (respects Discord's mention suppression)
@@ -39,9 +39,6 @@ User: @john hey, can you check this?
 Bot: [Starts monitoring john's activity]
 [After wait time if no response]
 Bot (Channel): @john, you did not respond to this message. Please reply!
-Bot (DM): Hi john! You haven't responded to a message in #general.
-         Original message: [link]
-         Please consider replying when you have a chance.
 ```
 
 ### Role Mentions
@@ -49,7 +46,7 @@ Bot (DM): Hi john! You haven't responded to a message in #general.
 ```text
 User: @developers please review this code
 Bot: [Starts monitoring all members of the @developers role individually]
-[Sends dual reminders (channel + DM) to each member who doesn't respond]
+[Sends reminders to each member who doesn't respond]
 ```
 
 ### Reply Monitoring
@@ -58,33 +55,8 @@ Bot: [Starts monitoring all members of the @developers role individually]
 Original: "Has anyone seen the new update?"
 Reply: "@john yes, it looks great!" (mentions john)
 Bot: [Starts monitoring john for response to the reply]
-[Sends dual reminders if john doesn't respond]
+[Sends reminder if john doesn't respond]
 ```
-
-## 💬 DM Reminder System
-
-The bot features a **dual reminder system** that sends both channel mentions and direct messages:
-
-### Channel Reminders
-
-- Posted in the original channel where the mention occurred
-- Uses @mention to notify the user
-- Includes clickable link to the original message
-- Visible to all channel members
-
-### Direct Message Reminders
-
-- Sent privately to the user's DMs
-- More personal and harder to miss
-- Includes channel context and original message link
-- Respects user privacy settings
-
-### DM Fallback Behavior
-
-- If DM fails (user has DMs disabled), channel reminder still works
-- If channel reminder fails (no permissions), DM still works
-- Logs all delivery attempts for debugging
-- Graceful handling of blocked/unavailable users
 
 ## 📋 Required Permissions
 
@@ -94,22 +66,16 @@ When inviting the bot to your server, make sure it has these permissions:
 - **Send Messages** - To send reminder messages in channels
 - **Read Message History** - To check for responses and fetch original messages
 - **Add Reactions** - For reaction response support (optional)
-- **Send Direct Messages** - To send DM reminders (handled automatically by Discord)
-
-**Note**: The bot will automatically request DM permissions when trying to send DMs. Users can allow or deny these on an individual basis.
 
 ## 💡 Example Usage
 
-### Basic Mention with Dual Reminders
+### Basic Mention with Reminder
 
 ```text
 User: @sarah can you help with this bug?
 Bot: [Starts monitoring sarah]
 [After wait time if no response]
 Bot (Channel): @sarah, you did not respond to this message. Please reply!
-Bot (DM): Hi sarah! You haven't responded to a message in #development.
-         Original message: [clickable link]
-         Please consider replying when you have a chance.
 ```
 
 ### Role Mention
@@ -117,7 +83,7 @@ Bot (DM): Hi sarah! You haven't responded to a message in #development.
 ```text
 User: @moderators we need help in #general
 Bot: [Starts monitoring all moderator role members individually]
-[Sends dual reminders (channel + DM) to each member who doesn't respond]
+[Sends reminders to each member who doesn't respond]
 ```
 
 ### Reply with Mention
@@ -126,7 +92,7 @@ Bot: [Starts monitoring all moderator role members individually]
 Original: "Has anyone seen the new update?"
 Reply: "@john yes, it looks great!" (mentions john)
 Bot: [Starts monitoring john for response to the reply]
-[Sends dual reminders if john doesn't respond]
+[Sends reminder if john doesn't respond]
 ```
 
 ## ⚙️ Configuration Settings
@@ -142,12 +108,6 @@ The bot uses environment variables for configuration:
 | `ALLOW_REACTIONS` | `true` | Accept reactions as valid responses |
 | `ENABLE_NOTIFY` | `true` | Enable/disable all monitoring functionality |
 
-### DM Settings
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_DM_REMINDERS` | `true` | Enable/disable DM reminders (channel reminders still work) |
-
 ### Performance Settings
 
 | Variable | Default | Description |
@@ -161,7 +121,6 @@ DISCORD_TOKEN=your_bot_token_here
 WAIT_TIME=86400
 ALLOW_REACTIONS=true
 ENABLE_NOTIFY=true
-ENABLE_DM_REMINDERS=true
 MAX_CONCURRENT_MONITORING=1000
 ```
 
@@ -175,12 +134,11 @@ MAX_CONCURRENT_MONITORING=1000
 - **Respects mention suppression**: Only monitors replies that actually notify users
 - **Memory management**: Automatically cleans up stale monitoring entries every 30 minutes
 
-### Dual Reminder System
+### Channel Reminder System
 
 - **Channel reminders**: Uses @mentions in the original channel with message links
-- **DM reminders**: Sends private direct messages with context and links
-- **Graceful fallbacks**: Works even if one delivery method fails
-- **Configurable**: DM reminders can be disabled while keeping channel reminders
+- **Graceful fallbacks**: Robust error handling for failed message delivery
+- **Configurable**: All reminder behavior can be customized via environment variables
 
 ### Rate Limiting & Performance
 
@@ -191,19 +149,12 @@ MAX_CONCURRENT_MONITORING=1000
 
 ### User Privacy
 
-- **DM consent**: Respects user DM settings (some users may have DMs disabled)
 - **No data persistence**: All monitoring is in-memory only (no database)
 - **Minimal logging**: Only logs essential information for debugging
 
 ## 🆘 Support & Troubleshooting
 
 ### Common Issues
-
-**DM reminders not working?**
-
-- Check if the user has DMs enabled in their Discord settings
-- Some users block DMs from server members - this is normal behavior
-- Channel reminders will still work even if DMs fail
 
 **Bot not responding to mentions?**
 
@@ -255,7 +206,6 @@ If you prefer to host your own instance:
 | `WAIT_TIME` | No | Time to wait before sending reminder (seconds) | `86400` (24 hours) |
 | `ALLOW_REACTIONS` | No | Accept reactions as valid responses | `true` |
 | `ENABLE_NOTIFY` | No | Enable/disable all monitoring | `true` |
-| `ENABLE_DM_REMINDERS` | No | Enable/disable DM reminders | `true` |
 | `MAX_CONCURRENT_MONITORING` | No | Maximum concurrent monitoring tasks | `1000` |
 
 ### Example .env file for self-hosting
@@ -265,7 +215,6 @@ DISCORD_TOKEN=your_actual_bot_token_here
 WAIT_TIME=86400
 ALLOW_REACTIONS=true
 ENABLE_NOTIFY=true
-ENABLE_DM_REMINDERS=true
 MAX_CONCURRENT_MONITORING=1000
 ```
 

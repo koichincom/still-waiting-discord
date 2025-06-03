@@ -17,8 +17,11 @@ token = os.getenv('DISCORD_TOKEN')
 WAIT_TIME = int(os.getenv('WAIT_TIME', '86400'))
 ALLOW_REACTIONS = os.getenv('ALLOW_REACTIONS', 'true').lower() == 'true'
 ENABLE_NOTIFY = os.getenv('ENABLE_NOTIFY', 'true').lower() == 'true'
-ENABLE_DM_REMINDERS = os.getenv('ENABLE_DM_REMINDERS', 'true').lower() == 'true'
 MAX_CONCURRENT_MONITORING = int(os.getenv('MAX_CONCURRENT_MONITORING', '1000'))
+
+# Health check variables
+PORT = 8080
+bot_status = {'is_ready': False, 'last_activity': time.time()}
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -86,27 +89,6 @@ async def rate_limited_send(channel, content):
         logger.error(f"Unexpected error sending message: {e}")
         return False
 
-async def send_dm_reminder(user, original_message, channel):
-    """Send a DM reminder to the user"""
-    try:
-        dm_content = (
-            f"Hi {user.name}! You haven't responded to a message in #{channel.name}.\n"
-            f"Original message: {original_message.jump_url}\n"
-            f"Please consider replying when you have a chance."
-        )
-        await user.send(dm_content)
-        logger.info(f"DM reminder sent to {user.name}")
-        return True
-    except discord.Forbidden:
-        logger.warning(f"Cannot send DM to {user.name} - DMs disabled or blocked")
-        return False
-    except discord.HTTPException as e:
-        logger.error(f"Failed to send DM to {user.name}: {e}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error sending DM to {user.name}: {e}")
-        return False
-
 @bot.event
 async def on_ready():
     bot_status['is_ready'] = True
@@ -115,7 +97,6 @@ async def on_ready():
     logger.info(f"Settings from .env - Wait time: {WAIT_TIME} seconds")
     logger.info(f"Reactions allowed: {ALLOW_REACTIONS}")
     logger.info(f"Monitoring enabled: {ENABLE_NOTIFY}")
-    logger.info(f"DM reminders enabled: {ENABLE_DM_REMINDERS}")
     logger.info(f"Max concurrent monitoring: {MAX_CONCURRENT_MONITORING}")
     logger.info(f"Health server running on port {PORT}")
     
@@ -190,27 +171,16 @@ async def monitor_user_response(channel, target_user, original_message):
                 # If no tasks completed (timeout), send reminder
                 if not done:
                     logger.info(f"Timeout reached, sending reminder to {target_user.name}")
-                    # Send channel reminder first
+                    # Send channel reminder
                     channel_sent = await rate_limited_send(
                         channel,
                         f"{target_user.mention}, you did not respond to [this message]({original_message.jump_url}). Please reply!"
                     )
                     
-                    # Also send DM reminder if enabled
-                    dm_sent = False
-                    if ENABLE_DM_REMINDERS:
-                        dm_sent = await send_dm_reminder(target_user, original_message, channel)
-                    
-                    if channel_sent and dm_sent:
-                        logger.info(f"Both channel and DM reminders sent to {target_user.name}")
-                    elif channel_sent and ENABLE_DM_REMINDERS:
-                        logger.info(f"Only channel reminder sent to {target_user.name} (DM failed)")
-                    elif channel_sent:
-                        logger.info(f"Channel reminder sent to {target_user.name} (DM disabled)")
-                    elif dm_sent:
-                        logger.info(f"Only DM reminder sent to {target_user.name} (channel failed)")
+                    if channel_sent:
+                        logger.info(f"Channel reminder sent to {target_user.name}")
                     else:
-                        logger.warning(f"All reminder methods failed for {target_user.name}")
+                        logger.warning(f"Channel reminder failed for {target_user.name}")
                 else:
                     logger.info(f"Response detected from {target_user.name}, monitoring stopped")
             else:
@@ -219,50 +189,28 @@ async def monitor_user_response(channel, target_user, original_message):
                     logger.info(f"Response detected from {target_user.name}, monitoring stopped")
                 except asyncio.TimeoutError:
                     logger.info(f"Timeout reached, sending reminder to {target_user.name}")
-                    # Send channel reminder first
+                    # Send channel reminder
                     channel_sent = await rate_limited_send(
                         channel,
                         f"{target_user.mention}, you did not respond to [this message]({original_message.jump_url}). Please reply!"
                     )
                     
-                    # Also send DM reminder if enabled
-                    dm_sent = False
-                    if ENABLE_DM_REMINDERS:
-                        dm_sent = await send_dm_reminder(target_user, original_message, channel)
-                    
-                    if channel_sent and dm_sent:
-                        logger.info(f"Both channel and DM reminders sent to {target_user.name}")
-                    elif channel_sent and ENABLE_DM_REMINDERS:
-                        logger.info(f"Only channel reminder sent to {target_user.name} (DM failed)")
-                    elif channel_sent:
-                        logger.info(f"Channel reminder sent to {target_user.name} (DM disabled)")
-                    elif dm_sent:
-                        logger.info(f"Only DM reminder sent to {target_user.name} (channel failed)")
+                    if channel_sent:
+                        logger.info(f"Channel reminder sent to {target_user.name}")
                     else:
-                        logger.warning(f"All reminder methods failed for {target_user.name}")
+                        logger.warning(f"Channel reminder failed for {target_user.name}")
         except asyncio.TimeoutError:
             logger.info(f"Timeout reached, sending reminder to {target_user.name}")
-            # Send channel reminder first
+            # Send channel reminder
             channel_sent = await rate_limited_send(
                 channel,
                 f"{target_user.mention}, you did not respond to [this message]({original_message.jump_url}). Please reply!"
             )
             
-            # Also send DM reminder if enabled
-            dm_sent = False
-            if ENABLE_DM_REMINDERS:
-                dm_sent = await send_dm_reminder(target_user, original_message, channel)
-            
-            if channel_sent and dm_sent:
-                logger.info(f"Both channel and DM reminders sent to {target_user.name}")
-            elif channel_sent and ENABLE_DM_REMINDERS:
-                logger.info(f"Only channel reminder sent to {target_user.name} (DM failed)")
-            elif channel_sent:
-                logger.info(f"Channel reminder sent to {target_user.name} (DM disabled)")
-            elif dm_sent:
-                logger.info(f"Only DM reminder sent to {target_user.name} (channel failed)")
+            if channel_sent:
+                logger.info(f"Channel reminder sent to {target_user.name}")
             else:
-                logger.warning(f"All reminder methods failed for {target_user.name}")
+                logger.warning(f"Channel reminder failed for {target_user.name}")
     except Exception as e:
         logger.error(f"Error in monitoring {target_user.name}: {e}")
     finally:
@@ -395,7 +343,6 @@ async def status(ctx):
     embed.add_field(name="Max Concurrent", value=MAX_CONCURRENT_MONITORING, inline=True)
     embed.add_field(name="Reactions Enabled", value="✅" if ALLOW_REACTIONS else "❌", inline=True)
     embed.add_field(name="Monitoring Enabled", value="✅" if ENABLE_NOTIFY else "❌", inline=True)
-    embed.add_field(name="DM Reminders", value="✅" if ENABLE_DM_REMINDERS else "❌", inline=True)
     embed.add_field(name="Servers", value=len(bot.guilds), inline=True)
     
     await ctx.send(embed=embed)
