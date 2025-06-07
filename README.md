@@ -4,11 +4,11 @@ A Discord bot that automatically monitors mentions and replies, then sends remin
 
 ## 🚀 **Quick Start - Add to Your Server (FREE)**
 
-**[Add Still Waiting to Your Discord Server](https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=292057852928&integration_type=0&scope=bot)**
+**[Add Still Waiting to Your Discord Server](https://discord.com/oauth2/authorize?client_id=1379235275745656994&permissions=292057852928&integration_type=0&scope=bot)**
 
 - **Completely FREE to use**  
 - **No setup required** - works immediately after adding  
-- **Minimal data storage** - only stores message IDs, user IDs, and timestamps temporarily  
+- **Minimal data storage** - only stores message IDs, user IDs, and timestamps temporarily for the reminder functionality
 - **Open source** - full transparency  
 
 Simply click the link above, select your server, and start using the bot immediately!
