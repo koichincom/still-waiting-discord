@@ -4,7 +4,7 @@ from dataclasses import dataclass
 class Config:
     # Application settings
     COMMAND_PREFIX: str = '/'
-    MAX_ROLE_MEMBERS: int = 1
+    MAX_ROLE_MEMBERS: int = 20  # Maximum number of role members to notify
     # Timing settings
     REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (1 day)
     REMINDER_INTERVAL: int = 60 * 60        # seconds (1 hour)
