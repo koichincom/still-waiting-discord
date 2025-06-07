@@ -5,11 +5,13 @@ class Config:
     # Application settings
     COMMAND_PREFIX: str = '/'
     MAX_ROLE_MEMBERS: int = 1
-    REMINDER_THRESHOLD: int = 60 * 60 * 24 # seconds (1 day)
-    REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour)
+    # Timing settings
+    REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (1 day)
+    REMINDER_INTERVAL: int = 60 * 60        # seconds (1 hour)
     
-    REMINDER_THRESHOLD: int = 10 # Testing purposes
-    REMINDER_INTERVAL: int = 10 # Testing purposes
+    # Testing settings (comment out for production)
+    # REMINDER_THRESHOLD: int = 10 # Testing purposes
+    # REMINDER_INTERVAL: int = 10 # Testing purposes
 
     # Database settings
     DB_TABLE_NAME: str = "waiting_messages"
