@@ -3,7 +3,6 @@ services:
     name: Still Waiting Discord
     env: python
     plan: free
-    pythonVersion: 3.13.0
     buildCommand: pip install -r requirements.txt
     startCommand: python src/main.py
     envVars:
