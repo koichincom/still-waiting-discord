@@ -31,7 +31,6 @@ env/
 ENV/
 .venv
 .env
-.python-version
 pyvenv.cfg
 
 # IDE specific files
