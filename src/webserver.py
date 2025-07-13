@@ -13,9 +13,10 @@ def run():
     if os.getenv('RENDER'):  # Render environment
         from waitress import serve
         serve(app, host='0.0.0.0', port=8080)
-    else:  # Local development
-        app.run(host='0.0.0.0', port=8080, debug=True)
+    else:  # Local development - disable debug mode when running in thread
+        app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
 
 def keep_alive():
     t = Thread(target=run)
+    t.daemon = True  # Make it a daemon thread so it doesn't block shutdown
     t.start()

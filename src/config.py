@@ -2,41 +2,28 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    # Application settings
+    # Genral
     COMMAND_PREFIX: str = '/'
-    MAX_ROLE_MEMBERS: int = 20  # Maximum number of role members to notify
-    # Timing settings
-    REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (1 day)
-    REMINDER_INTERVAL: int = 60 * 60        # seconds (1 hour)
+    PORT: int = 8080
+    MAX_ROLE_MEMBERS: int = 20 # Maximum number of role members to notify
     
-    # Testing settings (comment out for production)
-    # REMINDER_THRESHOLD: int = 10 # Testing purposes
-    # REMINDER_INTERVAL: int = 10 # Testing purposes
-
+    # Threshould and Interval
+    ALIGNED_REMINDER_INTERVAL_START: bool = True # Whether to align the start of the reminder interval to the next hour. This only works if REMINDER_INTERVAL is a multiple of 3600 seconds.
+    USER_COUNT_UPDATE_INTERVAL: int = 60 * 60 * 24  # seconds (1 day)
+    # The below are for testing
+    # REMINDER_THRESHOLD: int = 5
+    # REMINDER_INTERVAL: int = 5
+    
     # Database settings
-    DB_TABLE_NAME: str = "waiting_messages"
+    DB_TABLE_NAME_DISCORD: str = "discord_reminders"
+    DB_TABLE_NAME_STATS: str = "statistics"
     DB_MIN_POOL_SIZE: int = 1
     DB_MAX_POOL_SIZE: int = 5
 
-    # Web server settings
-    PORT: int = 8080
-
     # Message templates
-    ROLE_SIZE_ERROR: str = "Number of role members to be notified is limited to {limit}. These members will not be notified."
-    LOG_MESSAGE_SAVED: str = "Saved waiting message for {name} (ID: {id})"
-    LOG_MESSAGE_FAILED: str = "Failed to save message for {name}"
-    REMINDER_MESSAGE: str = "{user_mention} You haven't replied yet! We're STILL WAITING for your response!"
-    
-    # Log messages
-    LOG_NO_REMINDERS: str = "No messages to remind at this time."
-    LOG_REMINDER_SENT: str = "Sent reminder to {user_name} for message ID {message_id}."
-    LOG_REMINDER_DELETED: str = "Deleted reminder message {message_id} for user {user_name} after sending."
-    LOG_CHANNEL_USER_NOT_FOUND: str = "Could not find channel {channel_id} or user {user_id}"
-    LOG_REMINDER_FAILED: str = "Failed to send reminder for message ID {message_id}: {error}"
-    LOG_BOT_READY: str = "Bot is ready. Logged in as {bot_name}"
-    LOG_HEALTH_SERVER: str = "Health server running on port {port}"
-    LOG_DB_INITIALIZED: str = "Database initialized"
-    LOG_REPLY_DELETED: str = "Message {message_id} for user {user_id} deleted from database after reply"
-    LOG_REACTION_DELETED: str = "Message {message_id} for user {user_id} deleted from database after reaction"
+    REMINDER_MESSAGE_START: str = "## Still Waiting Reminders\n"
+    REMINDER_MESSAGE_MAIN: str = "- {user_mention} You haven't replied to {message_link}\n"
+    REMINDER_MESSAGE_END: str = "To avoid being reminded next time, please leave a stamp or use reply to the message you're mentioned in."
+    ROLE_SIZE_ERROR: str = "The reminders will not be sent to these members even if they don't reply, since the number of the role members exceeds the limit of {limit}."
 
 config = Config()

@@ -1,0 +1,17 @@
+[project]
+name = "still-waiting-discord"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "config>=0.5.1",
+    "datetime>=5.5",
+    "db>=0.1.1",
+    "discord>=2.3.2",
+    "dotenv>=0.9.9",
+    "flask>=3.1.1",
+    "logging>=0.4.9.6",
+    "webserver>=0.10.3",
+]
