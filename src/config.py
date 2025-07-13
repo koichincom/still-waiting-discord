@@ -8,13 +8,14 @@ class Config:
     MAX_ROLE_MEMBERS: int = 20 # Maximum number of role members to notify
     
     # Threshould and Interval
-    REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (24 hours)
-    REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour) - how often to check for reminders
+    # The below are for testing (uncomment and adjust as needed)
+    REMINDER_THRESHOLD: int = 5
+    REMINDER_INTERVAL: int = 5
+    # REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (24 hours)
+    # REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour) - how often to check for reminders
     ALIGNED_REMINDER_INTERVAL_START: bool = True # Whether to align the start of the reminder interval to the next hour. This only works if REMINDER_INTERVAL is a multiple of 3600 seconds.
     USER_COUNT_UPDATE_INTERVAL: int = 60 * 60 * 24  # seconds (1 day)
-    # The below are for testing (uncomment and adjust as needed)
-    # REMINDER_THRESHOLD: int = 5
-    # REMINDER_INTERVAL: int = 5
+
     
     # Database settings
     DB_TABLE_NAME_DISCORD: str = "discord_reminders"
