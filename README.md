@@ -9,7 +9,7 @@ Still Waiting Discord is a Discord bot that helps keep conversations active by r
 3. If they don’t leave a stamp or reply within 24 hours, the bot will remind them.
 4. If you like this bot, feel free to share it using the link below:
 
-`https://still-waiting.koichin.com/`
+`https://koichin.com/still-waiting`
 
 ## Self-Hosting (Optional)
 
