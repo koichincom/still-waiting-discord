@@ -1,6 +1,7 @@
 from flask import Flask
 from threading import Thread
 import os
+from waitress import serve
 
 app = Flask('')
 
@@ -11,7 +12,6 @@ def home():
 def run():
     # Use production server in deployment, development server locally
     if os.getenv('RENDER'):  # Render environment
-        from waitress import serve
         serve(app, host='0.0.0.0', port=8080)
     else:  # Local development - disable debug mode when running in thread
         app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
