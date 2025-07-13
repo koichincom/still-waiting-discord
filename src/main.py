@@ -109,19 +109,26 @@ async def on_ready():
         bot.db_pool = await get_pool()
         await init_db_discord(bot.db_pool)
         await init_db_stats(bot.db_pool)
-
-        send_reminders_task.start()
-        user_count_update_task.start()
         
         current_guilds = len(bot.guilds)
         await update_guild_count(bot.db_pool, current_guilds)
+
+        # Only start tasks if database is successfully initialized
+        send_reminders_task.start()
+        user_count_update_task.start()
+        
+        logger.info(f"Bot is ready. Logged in as {bot.user.name}")
+        logger.info(f"Database initialized successfully")
         
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}", exc_info=True)
-        return
+        logger.warning("Bot will continue running without database functionality")
+        # Continue without database functionality
+        bot.db_pool = None
 
     logger.info(f"Bot is ready. Logged in as {bot.user.name}")
     logger.info(f"Health server running on port {config.PORT}")
+    current_guilds = len(bot.guilds)
     logger.info(f"Connected to {current_guilds} guild(s).")
 
 
