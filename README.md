@@ -1,5 +1,7 @@
 # Still Waiting Discord
 
+![Image of the reminder](images/reminder.png)
+
 Still Waiting Discord is a Discord bot that helps keep conversations active by reminding users to reply when they are mentioned but haven't responded or reacted within 24 hours. (You can customize this by self-hosting.) This ensures important messages don't get overlooked.
 
 ## Installation (Free)
@@ -9,7 +11,7 @@ Still Waiting Discord is a Discord bot that helps keep conversations active by r
 3. If they don’t leave a stamp or reply within 24 hours, the bot will remind them.
 4. If you like this bot, feel free to share it using the link below:
 
-`https://koichin.com/still-waiting`
+`https://still-waiting.koichin.com/`
 
 ## Self-Hosting (Optional)
 
