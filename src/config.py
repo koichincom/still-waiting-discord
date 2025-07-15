@@ -2,26 +2,26 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    # Genral
+    # General
     COMMAND_PREFIX: str = '/'
     PORT: int = 8080
     MAX_ROLE_MEMBERS: int = 20 # Maximum number of role members to notify
     
-    # Threshould and Interval
+    # Thresholds and intervals
     # The below are for testing (uncomment and adjust as needed)
-    REMINDER_THRESHOLD: int = 5
-    REMINDER_INTERVAL: int = 5
+    REMINDER_THRESHOLD: int = 60
+    REMINDER_INTERVAL: int = 60
     # REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (24 hours)
     # REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour) - how often to check for reminders
     ALIGNED_REMINDER_INTERVAL_START: bool = True # Whether to align the start of the reminder interval to the next hour. This only works if REMINDER_INTERVAL is a multiple of 3600 seconds.
     USER_COUNT_UPDATE_INTERVAL: int = 60 * 60 * 24  # seconds (1 day)
 
-    
-    # Database settings
-    DB_TABLE_NAME_DISCORD: str = "discord_reminders"
-    DB_TABLE_NAME_STATS: str = "statistics"
-    DB_MIN_POOL_SIZE: int = 1
-    DB_MAX_POOL_SIZE: int = 5
+    # Firestore
+    FIRESTORE_COLLECTION_REMINDERS: str = 'reminders'
+    FIRESTORE_COLLECTION_STATISTICS: str = 'statistics'
+    FIRESTORE_DOCUMENT_DISCORD_GUILDS: str = 'discord_guilds'
+    FIRESTORE_DOCUMENT_DISCORD_USERS: str = 'discord_users'
+    FIRESTORE_DOCUMENT_DISCORD_MESSAGES: str = 'discord_messages'
 
     # Message templates
     REMINDER_MESSAGE_START: str = "## Still Waiting Reminders\n"

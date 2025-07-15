@@ -28,7 +28,7 @@ You can self-host this bot for more control and customization. This is completel
 1. Star this repo.
 2. Clone this repo.
 3. Install requirements: `pip install -r requirements.txt` or use [`pyproject.toml`](pyproject.toml).
-4. Create a `.env` file based on [`env.example`](env.example) in the root directory.
+4. Create a `.env` file based on [`secrets/.env.example`](secrets/.env.example) in the root directory.
 5. Set up a PostgreSQL database (Supabase is recommended) and update your `.env` file with the database credentials.
 6. Create your Discord bot and add your bot token to the `.env` file:
     - Go to [Discord Developers](https://discord.com/developers/applications) and create a new application.

@@ -1,167 +1,166 @@
-import asyncpg
-import os
-from dotenv import load_dotenv
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+from datetime import datetime, timedelta, timezone
 import logging
+from typing import Any, Dict, List
+
 from config import config
+from google.cloud.firestore_v1.base_query import FieldFilter
 
+# Initialize logging
 logger = logging.getLogger(__name__)
-load_dotenv()
 
-# Global connection pool
-_pool = None
+# Firebase Admin SDK initialization
+cred = credentials.Certificate("secrets/firestore-credentials.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-async def get_pool():
-    global _pool
-    if _pool is None:
-        _pool = await asyncpg.create_pool(
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            database=os.getenv("DB_DATABASE"), 
-            host=os.getenv("DB_HOST"),
-            port=int(os.getenv("DB_PORT")),
-            ssl='require',  # Supabase requires SSL
-            min_size=config.DB_MIN_POOL_SIZE,
-            max_size=config.DB_MAX_POOL_SIZE
-        )
-    return _pool
+class FirestoreReminderCollection:
+    """
+    Firestore collection for reminders.
+    """
+    def __init__(self):
+        self.db = db
+        self.collection_reminders = db.collection(config.FIRESTORE_COLLECTION_REMINDERS)
 
-async def init_db_discord(pool):
-    async with pool.acquire() as conn:
-        await conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {config.DB_TABLE_NAME_DISCORD} (
-                id SERIAL PRIMARY KEY,
-                message_id BIGINT NOT NULL,
-                channel_id BIGINT NOT NULL,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                mentioned_user_id BIGINT NOT NULL,
-                ignore BOOLEAN NOT NULL DEFAULT FALSE,
-                UNIQUE(message_id, mentioned_user_id)
-            )
-        """)
-        logger.info(f"Table {config.DB_TABLE_NAME_DISCORD} initialized")
-
-async def init_db_stats(pool):
-    async with pool.acquire() as conn:
-        await conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {config.DB_TABLE_NAME_STATS} (
-                id SERIAL PRIMARY KEY,
-                platform TEXT NOT NULL,
-                metric TEXT NOT NULL,
-                value BIGINT NOT NULL,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(platform, metric) -- Ensure unique constraint on platform and metric
-            )
-        """)
-        logger.info(f"Table {config.DB_TABLE_NAME_STATS} initialized")
-
-async def save_message(pool, message_id, channel_id, mentioned_user_id):
-    async with pool.acquire() as conn:
-        try:
-            return await conn.fetchrow(f"""
-                INSERT INTO {config.DB_TABLE_NAME_DISCORD} 
-                (message_id, channel_id, mentioned_user_id)
-                VALUES ($1, $2, $3)
-                RETURNING id, message_id, channel_id, created_at, mentioned_user_id
-            """, message_id, channel_id, mentioned_user_id)
+    def _make_data(self, message_id: int, channel_id: int, mentioned_user_id: int) -> Dict[str, Any]:
+        """
+        Create a data dictionary for storing reminder information in Firestore.
         
-        except asyncpg.UniqueViolationError:
-            logger.warning(f"Duplicate message: {message_id}")
-            return None
-        
-        except Exception as e:
-            logger.error(f"Failed to save message: {e}")
-            raise
-
-async def if_message_exists(pool, message_id, user_id):
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(f"""
-            SELECT * FROM {config.DB_TABLE_NAME_DISCORD} 
-            WHERE message_id = $1 AND mentioned_user_id = $2
-        """, message_id, user_id)
-        return row is not None
+        Args:
+            message_id (int): The Discord message ID
+            channel_id (int): The Discord channel ID where the message was sent
+            mentioned_user_id (int): The Discord user ID of the mentioned user
+            
+        Returns:
+            Dict[str, Any]: A dictionary containing the reminder data with server timestamp
+        """
+        return {
+            "message_id": message_id,
+            "channel_id": channel_id,
+            "mentioned_user_id": mentioned_user_id,
+            "created_at": firestore.SERVER_TIMESTAMP
+        }
     
-async def delete_message(pool, message_id, user_id):
-    async with pool.acquire() as conn:
-        try:
-            await conn.execute(f"""
-                DELETE FROM {config.DB_TABLE_NAME_DISCORD} 
-                WHERE message_id = $1 AND mentioned_user_id = $2
-            """, message_id, user_id)
-        except Exception as e:
-            logger.error(f"Failed to delete message {message_id} for user {user_id}: {e}")
-            raise
-
-async def has_message_expires(pool, threshold):
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(f"""
-            SELECT * FROM {config.DB_TABLE_NAME_DISCORD} 
-            WHERE created_at < NOW() - INTERVAL '{threshold} seconds'
-        """)
-        return rows
-
-async def update_guild_count(pool, count):
-    async with pool.acquire() as conn:
-        # Use a separate query approach for more reliable update
-        result = await conn.fetchrow(f"""
-            SELECT value FROM {config.DB_TABLE_NAME_STATS} 
-            WHERE platform = 'discord' AND metric = 'guild_count'
-        """)
+    def save_message(self, message_id: int, channel_id: int, mentioned_user_id: int) -> None:
+        """
+        Save a reminder message to the Firestore database.
         
-        if result:
-            # Update existing record
-            await conn.execute(f"""
-                UPDATE {config.DB_TABLE_NAME_STATS} 
-                SET value = $1, updated_at = NOW()
-                WHERE platform = 'discord' AND metric = 'guild_count'
-            """, count)
-        else:
-            # Insert new record
-            await conn.execute(f"""
-                INSERT INTO {config.DB_TABLE_NAME_STATS} (platform, metric, value, updated_at)
-                VALUES ('discord', 'guild_count', $1, NOW())
-            """, count)
+        Args:
+            message_id (int): The Discord message ID
+            channel_id (int): The Discord channel ID where the message was sent
+            mentioned_user_id (int): The Discord user ID of the mentioned user
+        """
+        data = self._make_data(message_id, channel_id, mentioned_user_id)
+        self.collection_reminders.add(data)
 
-async def update_user_count(pool, count):
-    async with pool.acquire() as conn:
-        # Use a separate query approach for more reliable update
-        result = await conn.fetchrow(f"""
-            SELECT value FROM {config.DB_TABLE_NAME_STATS} 
-            WHERE platform = 'discord' AND metric = 'user_count'
-        """)
+    def if_message_exists(self, message_id: int, user_id: int) -> bool:
+        """
+        Check if a reminder message exists for a specific user.
         
-        if result:
-            # Update existing record
-            await conn.execute(f"""
-                UPDATE {config.DB_TABLE_NAME_STATS} 
-                SET value = $1, updated_at = NOW()
-                WHERE platform = 'discord' AND metric = 'user_count'
-            """, count)
-        else:
-            # Insert new record
-            await conn.execute(f"""
-                INSERT INTO {config.DB_TABLE_NAME_STATS} (platform, metric, value, updated_at)
-                VALUES ('discord', 'user_count', $1, NOW())
-            """, count)
+        Args:
+            message_id (int): The Discord message ID to check
+            user_id (int): The Discord user ID to check
+            
+        Returns:
+            bool: True if the message exists in the database, False otherwise
+        """
+        query = self.collection_reminders \
+            .where(filter=FieldFilter("message_id", "==", message_id)) \
+            .where(filter=FieldFilter("mentioned_user_id", "==", user_id)) \
+            .limit(1)
+        return bool(list(query.stream()))
 
-async def increment_message_count(pool):
-    async with pool.acquire() as conn:
-        # Use a separate query approach for more reliable increment
-        result = await conn.fetchrow(f"""
-            SELECT value FROM {config.DB_TABLE_NAME_STATS} 
-            WHERE platform = 'discord' AND metric = 'message_count'
-        """)
+    def delete_message(self, message_id: int, user_id: int) -> bool:
+        """
+        Delete a reminder message from the database for a specific user.
         
-        if result:
-            # Update existing record
-            new_value = result['value'] + 1
-            await conn.execute(f"""
-                UPDATE {config.DB_TABLE_NAME_STATS} 
-                SET value = $1, updated_at = NOW()
-                WHERE platform = 'discord' AND metric = 'message_count'
-            """, new_value)
+        Args:
+            message_id (int): The Discord message ID to delete
+            user_id (int): The Discord user ID associated with the message
+            
+        Returns:
+            bool: False if the message was not found, True otherwise
+        """
+        docs = self.collection_reminders \
+            .where(filter=FieldFilter("message_id", "==", message_id)) \
+            .where(filter=FieldFilter("mentioned_user_id", "==", user_id)) \
+            .limit(1).stream()
+
+        doc = next(docs, None)
+        if doc:
+            doc.reference.delete()
         else:
-            # Insert new record
-            await conn.execute(f"""
-                INSERT INTO {config.DB_TABLE_NAME_STATS} (platform, metric, value, updated_at)
-                VALUES ('discord', 'message_count', 1, NOW())
-            """)
+            logger.error(f"Attempted to delete non-existing message: {message_id} for user: {user_id}")
+            return False
+
+    def get_expired_messages(self, threshold: int) -> List[Dict[str, Any]]:
+        """
+        Retrieve messages that have exceeded the reminder threshold time.
+        
+        Args:
+            threshold (int): The time threshold in seconds for considering messages expired
+            
+        Returns:
+            List[Dict[str, Any]]: A list of expired message documents
+        """
+        expire_time = datetime.now(timezone.utc) - timedelta(seconds=threshold)
+        docs = self.collection_reminders \
+            .where(filter=FieldFilter("created_at", "<=", expire_time)) \
+            .stream()
+        return [doc.to_dict() for doc in docs]
+
+
+class FirestoreStatsCollection:
+    """
+    Firestore collection for statistics.
+    """
+    def __init__(self):
+        self.db = db
+        self.collection_stats = db.collection(config.FIRESTORE_COLLECTION_STATISTICS)
+
+    def _make_data(self, metric: str, count: int) -> Dict[str, Any]:
+        """
+        Create a data dictionary for storing statistics information in Firestore.
+        
+        Args:
+            metric (str): The name of the metric being tracked
+            count (int): The count value for the metric
+            
+        Returns:
+            Dict[str, Any]: A dictionary containing the statistics data with server timestamp
+        """
+        return {
+            "platform": "discord",
+            "metric": metric,
+            "count": count,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+    
+    def update_guild_count(self, count: int) -> None:
+        """
+        Update the guild count statistic in Firestore.
+        
+        Args:
+            count (int): The current number of guilds the bot is in
+        """
+        data = self._make_data("guild_count", count)
+        self.collection_stats.document("discord_guilds").set(data, merge=True)
+
+    def update_user_count(self, count: int) -> None:
+        """
+        Update the user count statistic in Firestore.
+        
+        Args:
+            count (int): The current number of users the bot can see
+        """
+        data = self._make_data("user_count", count)
+        self.collection_stats.document("discord_users").set(data, merge=True)
+
+    def increment_message_count(self) -> None:
+        """
+        Increment the message count statistic in Firestore by 1.
+        """
+        data = self._make_data("message_count", firestore.Increment(1))
+        self.collection_stats.document("discord_messages").set(data, merge=True)
