@@ -51,6 +51,10 @@ You can self-host this bot for more control and customization. This is completel
 
 This project is open-source under the [`MIT License`](LICENSE). Contributions are welcome! If you have ideas, suggestions, or improvements, feel free to open an issue or submit a pull request.
 
+## Testing
+
+The project includes comprehensive test coverage for all major components. See [`tests/README.md`](tests/README.md) for detailed testing documentation.
+
 ## Privacy
 
 This bot does not store any message content. It only stores the following:

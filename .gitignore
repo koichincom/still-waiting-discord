@@ -3,7 +3,6 @@ secrets/
 .env
 .env.*
 !secrets/.env.example
-!.env.example
 
 # Python
 __pycache__/

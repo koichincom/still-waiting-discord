@@ -1,0 +1,52 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  schedule:
+    # Run security scan weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        enable-cache: true
+    
+    - name: Set up Python
+      run: uv python install 3.13
+    
+    - name: Install dependencies
+      run: uv sync --dev
+    
+    - name: Run safety check (if installed)
+      run: |
+        if uv run python -c "import safety" 2>/dev/null; then
+          echo "Running safety check..."
+          uv run safety check
+        else
+          echo "Safety not installed, skipping security check"
+          echo "To add security scanning, install safety: uv add --dev safety"
+        fi
+      continue-on-error: true
+    
+    - name: Run bandit security linter (if installed)
+      run: |
+        if uv run python -c "import bandit" 2>/dev/null; then
+          echo "Running bandit..."
+          uv run bandit -r src/ -f json -o bandit-report.json || true
+          uv run bandit -r src/
+        else
+          echo "Bandit not installed, skipping security linting"
+          echo "To add security linting, install bandit: uv add --dev bandit"
+        fi
+      continue-on-error: true

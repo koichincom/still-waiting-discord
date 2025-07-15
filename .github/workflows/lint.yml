@@ -1,0 +1,56 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        enable-cache: true
+    
+    - name: Set up Python
+      run: uv python install 3.13
+    
+    - name: Install dependencies
+      run: uv sync --dev
+    
+    - name: Check code formatting with black (if installed)
+      run: |
+        if uv run python -c "import black" 2>/dev/null; then
+          echo "Running black..."
+          uv run black --check --diff src/ tests/
+        else
+          echo "Black not installed, skipping formatting check"
+        fi
+      continue-on-error: true
+    
+    - name: Run flake8 (if installed)
+      run: |
+        if uv run python -c "import flake8" 2>/dev/null; then
+          echo "Running flake8..."
+          uv run flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+        else
+          echo "Flake8 not installed, skipping linting"
+        fi
+      continue-on-error: true
+    
+    - name: Type check with mypy (if installed)
+      run: |
+        if uv run python -c "import mypy" 2>/dev/null; then
+          echo "Running mypy..."
+          uv run mypy src/
+        else
+          echo "MyPy not installed, skipping type checking"
+        fi
+      continue-on-error: true

@@ -1,3 +1,0 @@
-- Nesting should be fixed [reminder.py](src/reminder.py)
-- Unit testing
-- 
