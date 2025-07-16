@@ -3,7 +3,7 @@ name = "still-waiting-discord"
 version = "0.1.0"
 description = "A Discord bot that reminds users to reply when mentioned"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "discord>=2.3.2",
     "dotenv>=0.9.9",

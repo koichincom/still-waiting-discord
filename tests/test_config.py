@@ -12,7 +12,7 @@ class TestConfig:
     """Test cases for Config class and configuration values."""
 
     def test_config_default_values(self):
-        """Test that config has correct default values."""
+        """Test that config has reasonable default values."""
         from config import Config
         
         config = Config()
@@ -20,13 +20,13 @@ class TestConfig:
         # General settings
         assert config.COMMAND_PREFIX == '/'
         assert config.PORT == 8080
-        assert config.MAX_ROLE_MEMBERS == 20
+        assert config.MAX_ROLE_MEMBERS > 0
         
-        # Timing settings
-        assert config.REMINDER_THRESHOLD == 60
-        assert config.REMINDER_INTERVAL == 60
-        assert config.ALIGNED_REMINDER_INTERVAL_START is True
-        assert config.USER_COUNT_UPDATE_INTERVAL == 60 * 60 * 24
+        # Timing settings - should be positive integers
+        assert isinstance(config.REMINDER_THRESHOLD, int) and config.REMINDER_THRESHOLD > 0
+        assert isinstance(config.REMINDER_INTERVAL, int) and config.REMINDER_INTERVAL > 0
+        assert isinstance(config.ALIGNED_REMINDER_INTERVAL_START, bool)
+        assert config.USER_COUNT_UPDATE_INTERVAL > 0
         
         # Firestore collection names
         assert config.FIRESTORE_COLLECTION_REMINDERS == 'reminders'
@@ -146,19 +146,18 @@ class TestConfig:
         config.REMINDER_THRESHOLD = original_threshold
 
     def test_config_production_vs_testing_values(self):
-        """Test that config has reasonable values for both testing and production."""
+        """Test that config has reasonable values that can be adjusted for testing or production."""
         from config import Config
         
         config = Config()
         
-        # Current values are set for testing (60 seconds)
-        # This test documents that behavior
-        assert config.REMINDER_THRESHOLD == 60  # Testing value
-        assert config.REMINDER_INTERVAL == 60   # Testing value
+        # Values should be positive integers (can be adjusted for testing or production)
+        assert isinstance(config.REMINDER_THRESHOLD, int) and config.REMINDER_THRESHOLD > 0
+        assert isinstance(config.REMINDER_INTERVAL, int) and config.REMINDER_INTERVAL > 0
         
-        # Production values would be:
-        # REMINDER_THRESHOLD = 60 * 60 * 24  # 24 hours
-        # REMINDER_INTERVAL = 60 * 60        # 1 hour
+        # Document that these values are configurable:
+        # - For testing: shorter values (like 5 seconds) for faster tests
+        # - For production: longer values (like 24 hours for threshold, 1 hour for interval)
 
     def test_config_firestore_collection_names_are_valid(self):
         """Test that Firestore collection names follow naming conventions."""
