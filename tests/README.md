@@ -3,23 +3,35 @@
 
 All tests are run with `pytest` and `uv`.
 
+
 ## How to Run
 
 Install dependencies:
 ```sh
 uv sync --dev
+# or, if you use pip:
+pip install -r requirements.txt
 ```
+
 Run all tests:
 ```sh
 uv run pytest tests/ -v
+# or, if you use pip:
+pytest tests/ -v
 ```
+
 Run a specific test:
 ```sh
 uv run pytest tests/test_db.py -v
+# or, if you use pip:
+pytest tests/test_db.py -v
 ```
+
 Coverage report:
 ```sh
 uv run pytest tests/ --cov=src --cov-report=term
+# or, if you use pip:
+pytest tests/ --cov=src --cov-report=term
 ```
 
 ## Notes
