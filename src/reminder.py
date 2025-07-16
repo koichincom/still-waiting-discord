@@ -1,19 +1,20 @@
 import logging
 from datetime import datetime, timedelta
 from collections import defaultdict
+from typing import Any
 import discord
 
-from db import get_pool, delete_message, has_message_expires
+from db import FirestoreReminderCollection
 from config import config
 
 logger = logging.getLogger(__name__)
 
-async def send_reminders(bot):
+async def send_reminders(bot: discord.Client) -> None:
     try:
         # All the ingredients for sending reminders
-        pool = await get_pool()
         threshold = config.REMINDER_THRESHOLD
-        reminders = await has_message_expires(pool, threshold)
+        reminder_db = FirestoreReminderCollection()
+        reminders = reminder_db.get_expired_messages(threshold)
 
         # Return early if there are no reminders to send
         if not reminders:
@@ -21,7 +22,9 @@ async def send_reminders(bot):
 
         # Verify the channels, users, and messages in the reminders exist
         # Use set() just in case
-        verified_reminders = set()
+        verified_reminders = []
+        unique_reminders = set()
+
         invalid_channels = set()
         invalid_mentioned_users = set()
         invalid_messages = set()
@@ -29,44 +32,53 @@ async def send_reminders(bot):
 
         for i in range(len(reminders)):
             instant_invalid = False
-            if not reminders[i]['channel_id'] in invalid_channels:
-                if not reminders[i]['mentioned_user_id'] in invalid_mentioned_users:
-                    if not reminders[i]['message_id'] in invalid_messages:
-                        if not (reminders[i]['channel_id'], reminders[i]['mentioned_user_id']) in invalid_permissions:
-                            # Obtain the channel, user, and message
-                            channel = bot.get_channel(reminders[i]['channel_id'])
-                            user = bot.get_user(reminders[i]['mentioned_user_id'])
-                            try:
-                                message = await channel.fetch_message(reminders[i]['message_id'])
-                            except discord.NotFound:
-                                message = None
-                            except Exception as e:
-                                logger.error(f"Error fetching message {reminders[i]['message_id']}: {e}")
-                                message = None
+            if reminders[i]['channel_id'] in invalid_channels:
+                continue
+            if reminders[i]['mentioned_user_id'] in invalid_mentioned_users:
+                continue
+            if reminders[i]['message_id'] in invalid_messages:
+                continue
+            if (reminders[i]['channel_id'], reminders[i]['mentioned_user_id']) in invalid_permissions:
+                continue
 
-                            # Append to invalid lists if each of the component is missing
-                            if not channel:
-                                invalid_channels.add(reminders[i]['channel_id'])
-                                instant_invalid = True
-                            if not user:
-                                invalid_mentioned_users.add(reminders[i]['mentioned_user_id'])
-                                instant_invalid = True
-                            if not message:
-                                invalid_messages.add(reminders[i]['message_id'])
-                                instant_invalid = True
+            # Obtain the channel, user, and message
+            channel = bot.get_channel(reminders[i]['channel_id'])
+            user = bot.get_user(reminders[i]['mentioned_user_id'])
+            try:
+                message = await channel.fetch_message(reminders[i]['message_id'])
+            except discord.NotFound:
+                message = None
+            except Exception as e:
+                logger.error(f"Error fetching message {reminders[i]['message_id']}: {e}")
+                message = None
 
-                            guild = channel.guild
-                            member = guild.get_member(reminders[i]['mentioned_user_id'])
-                            if not channel.permissions_for(member).read_messages:
-                                invalid_permissions.add((reminders[i]['channel_id'], reminders[i]['mentioned_user_id']))
-                                instant_invalid = True
+            # Append to invalid lists if each of the component is missing
+            if not channel:
+                invalid_channels.add(reminders[i]['channel_id'])
+                instant_invalid = True
+            if not user:
+                invalid_mentioned_users.add(reminders[i]['mentioned_user_id'])
+                instant_invalid = True
+            if not message:
+                invalid_messages.add(reminders[i]['message_id'])
+                instant_invalid = True
 
-                            # If all components are valid, append to verified reminders
-                            if not instant_invalid:
-                                verified_reminders.add(reminders[i])
-                            else:
-                                await delete_message(pool, reminders[i]['message_id'], reminders[i]['mentioned_user_id'])
-                                logger.info(f"Invalid reminder is ignored and deleted from DB: user {reminders[i]['mentioned_user_id']} / {reminders[i]['channel_id']} / {reminders[i]['message_id']}")
+            if not instant_invalid:
+                guild = channel.guild
+                member = guild.get_member(reminders[i]['mentioned_user_id'])
+                if not channel.permissions_for(member).read_messages:
+                    invalid_permissions.add((reminders[i]['channel_id'], reminders[i]['mentioned_user_id']))
+                    instant_invalid = True
+
+            # If all components are valid, append to verified reminders
+            if not instant_invalid:
+                tuple_reminder = (reminders[i]['message_id'], reminders[i]['mentioned_user_id'])
+                if tuple_reminder not in unique_reminders:
+                    unique_reminders.add(tuple_reminder)
+                    verified_reminders.append(reminders[i])
+            else:
+                reminder_db.delete_message(reminders[i]['message_id'], reminders[i]['mentioned_user_id'])
+                logger.info(f"Invalid reminder is ignored and deleted from DB: user {reminders[i]['mentioned_user_id']} / {reminders[i]['channel_id']} / {reminders[i]['message_id']}")
 
         # Group verified reminders by channel_id
         grouped_reminders = defaultdict(list)
@@ -87,7 +99,7 @@ async def send_reminders(bot):
                     user_mention=user_mention,
                     message_link=message_link
                 )
-                await delete_message(pool, item['message_id'], item['mentioned_user_id'])
+                reminder_db.delete_message(item['message_id'], item['mentioned_user_id'])
                 logger.info(f"Deleted reminder: message_id={item['message_id']}, mentioned_user_id={item['mentioned_user_id']}")
             
             message += config.REMINDER_MESSAGE_END

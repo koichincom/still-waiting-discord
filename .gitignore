@@ -1,7 +1,6 @@
 # Environment variables
+secrets/
 .env
-.env.*
-!.env.example
 
 # Python
 __pycache__/
@@ -31,7 +30,6 @@ env/
 ENV/
 .venv
 .env
-.python-version
 pyvenv.cfg
 
 # IDE specific files
