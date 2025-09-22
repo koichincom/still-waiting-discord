@@ -10,10 +10,10 @@ class Config:
 
     # Thresholds and intervals
     # The below are for testing (uncomment and adjust as needed)
-    REMINDER_THRESHOLD: int = 5
-    REMINDER_INTERVAL: int = 5
-    # REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (24 hours)
-    # REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour) - how often to check for reminders
+    # REMINDER_THRESHOLD: int = 5
+    # REMINDER_INTERVAL: int = 5
+    REMINDER_THRESHOLD: int = 60 * 60 * 24  # seconds (24 hours)
+    REMINDER_INTERVAL: int = 60 * 60  # seconds (1 hour) - how often to check for reminders
     ALIGNED_REMINDER_INTERVAL_START: bool = (
         True  # Whether to align the start of the reminder interval to the next hour. This only works if REMINDER_INTERVAL is a multiple of 3600 seconds.
     )
