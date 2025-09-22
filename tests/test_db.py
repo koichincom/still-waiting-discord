@@ -55,28 +55,30 @@ class TestFirestoreReminderCollection:
         assert call_args['mentioned_user_id'] == 789
 
     @patch('db.db')
-    def test_if_message_exists_true(self, mock_db):
-        """Test if_message_exists returns True when message exists."""
+    def test_delete_message_by_message_and_user_id_success(self, mock_db):
+        """Test delete_message_by_message_and_user_id returns True when message exists."""
         from db import FirestoreReminderCollection
         
         mock_collection = Mock()
         mock_query = Mock()
         mock_doc = Mock()
+        mock_doc_ref = Mock()
         
         mock_db.collection.return_value = mock_collection
         mock_collection.where.return_value = mock_query
         mock_query.where.return_value = mock_query
         mock_query.limit.return_value = mock_query
         mock_query.stream.return_value = [mock_doc]
+        mock_doc.reference = mock_doc_ref
         
         collection = FirestoreReminderCollection()
-        result = collection.if_message_exists(123, 789)
+        result = collection.delete_message_by_message_and_user_id(123, 789)
         
-        assert result is True
+        mock_doc_ref.delete.assert_called_once()
 
     @patch('db.db')
-    def test_if_message_exists_false(self, mock_db):
-        """Test if_message_exists returns False when message doesn't exist."""
+    def test_delete_message_by_message_and_user_id_not_found(self, mock_db):
+        """Test delete_message_by_message_and_user_id returns False when message doesn't exist."""
         from db import FirestoreReminderCollection
         
         mock_collection = Mock()
@@ -89,52 +91,9 @@ class TestFirestoreReminderCollection:
         mock_query.stream.return_value = []
         
         collection = FirestoreReminderCollection()
-        result = collection.if_message_exists(123, 789)
+        result = collection.delete_message_by_message_and_user_id(123, 789)
         
         assert result is False
-
-    @patch('db.db')
-    def test_delete_message_success(self, mock_db):
-        """Test delete_message when message exists."""
-        from db import FirestoreReminderCollection
-        
-        mock_collection = Mock()
-        mock_query = Mock()
-        mock_doc = Mock()
-        mock_doc_ref = Mock()
-        
-        mock_db.collection.return_value = mock_collection
-        mock_collection.where.return_value = mock_query
-        mock_query.where.return_value = mock_query
-        mock_query.limit.return_value = mock_query
-        mock_query.stream.return_value = iter([mock_doc])
-        mock_doc.reference = mock_doc_ref
-        
-        collection = FirestoreReminderCollection()
-        collection.delete_message(123, 789)
-        
-        mock_doc_ref.delete.assert_called_once()
-
-    @patch('db.db')
-    @patch('db.logger')
-    def test_delete_message_not_found(self, mock_logger, mock_db):
-        """Test delete_message when message doesn't exist."""
-        from db import FirestoreReminderCollection
-        
-        mock_collection = Mock()
-        mock_query = Mock()
-        
-        mock_db.collection.return_value = mock_collection
-        mock_collection.where.return_value = mock_query
-        mock_query.where.return_value = mock_query
-        mock_query.limit.return_value = mock_query
-        mock_query.stream.return_value = iter([])
-        
-        collection = FirestoreReminderCollection()
-        result = collection.delete_message(123, 789)
-        
-        assert result is False
-        mock_logger.error.assert_called_once()
 
     @patch('db.db')
     def test_get_expired_messages(self, mock_db):

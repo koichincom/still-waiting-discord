@@ -29,7 +29,7 @@ class TestConfig:
         assert config.USER_COUNT_UPDATE_INTERVAL > 0
         
         # Firestore collection names
-        assert config.FIRESTORE_COLLECTION_REMINDERS == 'reminders'
+        assert config.FIRESTORE_COLLECTION_REMINDERS == 'discord_reminders'
         assert config.FIRESTORE_COLLECTION_STATISTICS == 'statistics'
         assert config.FIRESTORE_DOCUMENT_DISCORD_GUILDS == 'discord_guilds'
         assert config.FIRESTORE_DOCUMENT_DISCORD_USERS == 'discord_users'

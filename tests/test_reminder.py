@@ -94,7 +94,7 @@ class TestSendReminders:
         bot.get_user.assert_called_with(222222222)
         channel.fetch_message.assert_called_with(123456789)
         channel.send.assert_called_once()
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -122,7 +122,7 @@ class TestSendReminders:
         
         await send_reminders(bot)
         
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -150,7 +150,7 @@ class TestSendReminders:
         
         await send_reminders(bot)
         
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -184,7 +184,7 @@ class TestSendReminders:
         
         await send_reminders(bot)
         
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -229,7 +229,7 @@ class TestSendReminders:
         
         await send_reminders(bot)
         
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -302,7 +302,7 @@ class TestSendReminders:
         
         # Should send one message containing both reminders
         channel.send.assert_called_once()
-        assert mock_db.delete_message.call_count == 2
+        assert mock_db.delete_message_by_message_and_user_id.call_count == 2
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -356,7 +356,7 @@ class TestSendReminders:
         await send_reminders(bot)
         
         mock_logger.error.assert_called()
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('reminder.config')
     @patch('reminder.FirestoreReminderCollection')
@@ -433,4 +433,4 @@ class TestSendReminders:
         await send_reminders(bot)
         
         # Should only delete once due to deduplication
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)

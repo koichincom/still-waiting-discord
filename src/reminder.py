@@ -3,13 +3,23 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import Any
 import discord
+from discord.ext import commands
 
 from db import FirestoreReminderCollection
 from config import config
 
 logger = logging.getLogger(__name__)
 
-async def send_reminders(bot: discord.Client) -> None:
+async def send_reminders(bot: commands.Bot) -> None:
+    """
+    Send reminder messages to users who haven't responded (by sending a message or reacting) in the channel/thread within the reminder interval.
+
+    Retrieves pending reminders from the database, sends DMs to mentioned users,
+    and deletes the reminders after sending.
+
+    Args:
+        bot (commands.Bot): The Discord bot instance
+    """
     try:
         # All the ingredients for sending reminders
         threshold = config.REMINDER_THRESHOLD
@@ -77,7 +87,7 @@ async def send_reminders(bot: discord.Client) -> None:
                     unique_reminders.add(tuple_reminder)
                     verified_reminders.append(reminders[i])
             else:
-                reminder_db.delete_message(reminders[i]['message_id'], reminders[i]['mentioned_user_id'])
+                reminder_db.delete_message_by_message_and_user_id(reminders[i]['message_id'], reminders[i]['mentioned_user_id'])
                 logger.info(f"Invalid reminder is ignored and deleted from DB: user {reminders[i]['mentioned_user_id']} / {reminders[i]['channel_id']} / {reminders[i]['message_id']}")
 
         # Group verified reminders by channel_id
@@ -99,7 +109,7 @@ async def send_reminders(bot: discord.Client) -> None:
                     user_mention=user_mention,
                     message_link=message_link
                 )
-                reminder_db.delete_message(item['message_id'], item['mentioned_user_id'])
+                reminder_db.delete_message_by_message_and_user_id(item['message_id'], item['mentioned_user_id'])
                 logger.info(f"Deleted reminder: message_id={item['message_id']}, mentioned_user_id={item['mentioned_user_id']}")
             
             message += config.REMINDER_MESSAGE_END

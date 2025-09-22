@@ -1,12 +1,11 @@
-
 # Still Waiting Discord - Test Suite
 
 All tests are run with `pytest` and `uv`.
 
-
 ## How to Run
 
 Install dependencies:
+
 ```sh
 uv sync --dev
 # or, if you use pip:
@@ -14,6 +13,7 @@ pip install -r requirements.txt
 ```
 
 Run all tests:
+
 ```sh
 uv run pytest tests/ -v
 # or, if you use pip:
@@ -21,6 +21,7 @@ pytest tests/ -v
 ```
 
 Run a specific test:
+
 ```sh
 uv run pytest tests/test_db.py -v
 # or, if you use pip:
@@ -28,6 +29,7 @@ pytest tests/test_db.py -v
 ```
 
 Coverage report:
+
 ```sh
 uv run pytest tests/ --cov=src --cov-report=term
 # or, if you use pip:
@@ -41,5 +43,10 @@ pytest tests/ --cov=src --cov-report=term
 - Mocks: Discord API and Firestore (no real API/database calls)
 - Fixtures: `conftest.py`
 - Test runner: `run_tests.py`
+
+## Key Test Scenarios
+
+- **Message Responses**: Verify that any message in the channel/thread removes reminders (not just replies).
+- **Reaction Responses**: Confirm reactions only on the specific mentioned message remove reminders.
 
 See the main README.md for more details.
