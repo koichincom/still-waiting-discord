@@ -99,35 +99,33 @@ class TestBotIntegration:
         
         # Verify reminder was sent and deleted
         channel.send.assert_called_once()
-        mock_reminder_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_reminder_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('handle_input.reminder_db')
     @pytest.mark.asyncio
-    async def test_reply_removes_reminder(self, mock_db):
-        """Test that replying to a message removes the reminder."""
-        from handle_input import observe_reply
+    async def test_message_in_channel_removes_reminder(self, mock_db):
+        """Test that sending a message in the channel removes the reminder."""
+        from handle_input import observe_message
         
-        mock_db.if_message_exists.return_value = True
+        mock_db.search_reminders.return_value = ['doc1']
         
-        # Create reply message
-        reply_message = Mock(spec=discord.Message)
-        reply_message.author = Mock(spec=discord.User)
-        reply_message.author.id = 222222222
-        reply_message.reference = Mock()
-        reply_message.reference.message_id = 123456789
+        # Create message in channel
+        message = Mock(spec=discord.Message)
+        message.channel.id = 987654321
+        message.author.id = 222222222
         
-        observe_reply(reply_message)
+        observe_message(message)
         
         # Verify reminder was removed
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.search_reminders.assert_called_once_with(987654321, 222222222)
+        mock_db.delete_messages_by_doc_ids.assert_called_once_with(['doc1'])
 
     @patch('handle_input.reminder_db')
     def test_reaction_removes_reminder(self, mock_db):
         """Test that reacting to a message removes the reminder."""
         from handle_input import observe_reaction
         
-        mock_db.if_message_exists.return_value = True
+        mock_db.delete_message_by_message_and_user_id.return_value = True
         
         # Create reaction payload
         payload = Mock()
@@ -137,8 +135,7 @@ class TestBotIntegration:
         observe_reaction(payload)
         
         # Verify reminder was removed
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('handle_input.reminder_db')
     @patch('handle_input.config')
@@ -259,7 +256,7 @@ class TestBotIntegration:
         channel.send.assert_called_once()
         
         # Should delete both reminders
-        assert mock_db.delete_message.call_count == 2
+        assert mock_db.delete_message_by_message_and_user_id.call_count == 2
 
 
 class TestErrorHandlingIntegration:

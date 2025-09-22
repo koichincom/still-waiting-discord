@@ -217,73 +217,54 @@ class TestRegisterDb:
         mock_logger.error.assert_called_once()
 
 
-class TestObserveReply:
-    """Test cases for observe_reply function."""
+class TestObserveMessage:
+    """Test cases for observe_message function."""
 
     @patch('handle_input.reminder_db')
-    def test_observe_reply_valid_reply(self, mock_db):
-        """Test observe_reply with valid reply message."""
-        from handle_input import observe_reply
+    def test_observe_message_valid_response(self, mock_db):
+        """Test observe_message with valid message in tracked channel."""
+        from handle_input import observe_message
         
-        mock_db.if_message_exists.return_value = True
+        mock_db.search_reminders.return_value = ['doc1']
         
         message = Mock(spec=discord.Message)
-        message.author = Mock(spec=discord.User)
+        message.channel.id = 987654321
         message.author.id = 222222222
-        message.reference = Mock()
-        message.reference.message_id = 123456789
         
-        observe_reply(message)
+        observe_message(message)
         
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.search_reminders.assert_called_once_with(987654321, 222222222)
+        mock_db.delete_messages_by_doc_ids.assert_called_once_with(['doc1'])
 
     @patch('handle_input.reminder_db')
-    def test_observe_reply_no_reference(self, mock_db):
-        """Test observe_reply ignores messages without reference."""
-        from handle_input import observe_reply
+    def test_observe_message_no_reminders(self, mock_db):
+        """Test observe_message when no reminders are found."""
+        from handle_input import observe_message
+        
+        mock_db.search_reminders.return_value = []
         
         message = Mock(spec=discord.Message)
-        message.reference = None
-        
-        observe_reply(message)
-        
-        mock_db.if_message_exists.assert_not_called()
-        mock_db.delete_message.assert_not_called()
-
-    @patch('handle_input.reminder_db')
-    def test_observe_reply_message_not_tracked(self, mock_db):
-        """Test observe_reply when message is not being tracked."""
-        from handle_input import observe_reply
-        
-        mock_db.if_message_exists.return_value = False
-        
-        message = Mock(spec=discord.Message)
-        message.author = Mock(spec=discord.User)
+        message.channel.id = 987654321
         message.author.id = 222222222
-        message.reference = Mock()
-        message.reference.message_id = 123456789
         
-        observe_reply(message)
+        observe_message(message)
         
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_not_called()
+        mock_db.search_reminders.assert_called_once_with(987654321, 222222222)
+        mock_db.delete_messages_by_doc_ids.assert_not_called()
 
     @patch('handle_input.reminder_db')
     @patch('handle_input.logger')
-    def test_observe_reply_exception_handling(self, mock_logger, mock_db):
-        """Test observe_reply handles exceptions gracefully."""
-        from handle_input import observe_reply
+    def test_observe_message_exception_handling(self, mock_logger, mock_db):
+        """Test observe_message handles exceptions gracefully."""
+        from handle_input import observe_message
         
-        mock_db.if_message_exists.side_effect = Exception("Database error")
+        mock_db.search_reminders.side_effect = Exception("Database error")
         
         message = Mock(spec=discord.Message)
-        message.author = Mock(spec=discord.User)
+        message.channel.id = 987654321
         message.author.id = 222222222
-        message.reference = Mock()
-        message.reference.message_id = 123456789
         
-        observe_reply(message)
+        observe_message(message)
         
         mock_logger.error.assert_called_once()
 
@@ -296,7 +277,7 @@ class TestObserveReaction:
         """Test observe_reaction with valid reaction payload."""
         from handle_input import observe_reaction
         
-        mock_db.if_message_exists.return_value = True
+        mock_db.delete_message_by_message_and_user_id.return_value = True
         
         payload = Mock()
         payload.message_id = 123456789
@@ -304,15 +285,14 @@ class TestObserveReaction:
         
         observe_reaction(payload)
         
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_called_once_with(123456789, 222222222)
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('handle_input.reminder_db')
     def test_observe_reaction_message_not_tracked(self, mock_db):
         """Test observe_reaction when message is not being tracked."""
         from handle_input import observe_reaction
         
-        mock_db.if_message_exists.return_value = False
+        mock_db.delete_message_by_message_and_user_id.return_value = False
         
         payload = Mock()
         payload.message_id = 123456789
@@ -320,8 +300,7 @@ class TestObserveReaction:
         
         observe_reaction(payload)
         
-        mock_db.if_message_exists.assert_called_once_with(123456789, 222222222)
-        mock_db.delete_message.assert_not_called()
+        mock_db.delete_message_by_message_and_user_id.assert_called_once_with(123456789, 222222222)
 
     @patch('handle_input.reminder_db')
     @patch('handle_input.logger')
@@ -329,7 +308,7 @@ class TestObserveReaction:
         """Test observe_reaction handles exceptions gracefully."""
         from handle_input import observe_reaction
         
-        mock_db.if_message_exists.side_effect = Exception("Database error")
+        mock_db.delete_message_by_message_and_user_id.side_effect = Exception("Database error")
         
         payload = Mock()
         payload.message_id = 123456789

@@ -1,5 +1,5 @@
 # Environment variables
-secrets/
+secrets/*
 .env
 
 # Python

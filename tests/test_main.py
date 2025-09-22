@@ -15,10 +15,10 @@ class TestBotEvents:
     """Test cases for bot event handlers."""
 
     @patch('main.register_db')
-    @patch('main.observe_reply')
+    @patch('main.observe_message')
     @patch('main.stats_db')
     @pytest.mark.asyncio
-    async def test_on_message_human_user(self, mock_stats_db, mock_observe_reply, mock_register_db):
+    async def test_on_message_human_user(self, mock_stats_db, mock_observe_message, mock_register_db):
         """Test on_message with human user message."""
         # Import here to avoid circular imports during patching
         import main
@@ -40,7 +40,7 @@ class TestBotEvents:
             await main.on_message(message)
             
             mock_register_db.assert_called_once_with(message)
-            mock_observe_reply.assert_called_once_with(message)
+            mock_observe_message.assert_called_once_with(message)
             bot.process_commands.assert_called_once_with(message)
             mock_stats_db.increment_message_count.assert_called_once()
         finally:
@@ -48,10 +48,10 @@ class TestBotEvents:
             main.bot = original_bot
 
     @patch('main.register_db')
-    @patch('main.observe_reply')
+    @patch('main.observe_message')
     @patch('main.stats_db')
     @pytest.mark.asyncio
-    async def test_on_message_bot_user(self, mock_stats_db, mock_observe_reply, mock_register_db):
+    async def test_on_message_bot_user(self, mock_stats_db, mock_observe_message, mock_register_db):
         """Test on_message ignores bot messages."""
         import main
         
@@ -71,7 +71,7 @@ class TestBotEvents:
             
             # Should not call any functions for bot messages
             mock_register_db.assert_not_called()
-            mock_observe_reply.assert_not_called()
+            mock_observe_message.assert_not_called()
             bot.process_commands.assert_not_called()
             mock_stats_db.increment_message_count.assert_not_called()
         finally:
